@@ -1,0 +1,1242 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Routine - เกมแตะคำศัพท์ภาษาอังกฤษ ป.3</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts (Inter & Itim for Thai kid friendly style) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Itim&display=swap" rel="stylesheet">
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- MediaPipe Hand Tracking APIs -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+
+    <style>
+        body {
+            font-family: 'Itim', 'Inter', sans-serif;
+            background: linear-gradient(135deg, #fef08a 0%, #f9a8d4 100%);
+            overflow-x: hidden;
+        }
+        .bubble-shadow {
+            box-shadow: 0 8px 0px 0px rgba(0, 0, 0, 0.1);
+        }
+        .correct-pulse {
+            animation: pulse-green 0.5s ease-in-out;
+        }
+        .wrong-shake {
+            animation: shake 0.5s ease-in-out;
+        }
+        @keyframes pulse-green {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); box-shadow: 0 0 25px #22c55e; }
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-10px); }
+            40%, 80% { transform: translateX(10px); }
+        }
+        /* Custom scrollbar for vocab list */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-2 sm:p-4 select-none relative">
+
+    <div class="w-full max-w-5xl bg-white/90 backdrop-blur-md rounded-3xl border-4 border-amber-400 p-4 sm:p-6 shadow-2xl relative overflow-hidden flex flex-col min-h-[90vh]">
+        
+        <!-- Top Wave Decoration -->
+        <div class="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-pink-400 via-red-400 to-yellow-400"></div>
+
+        <!-- 1. START SCREEN -->
+        <div id="startScreen" class="flex-1 flex flex-col items-center justify-between py-6 text-center z-10">
+            <div>
+                <span class="inline-block px-4 py-1.5 bg-pink-100 text-pink-600 rounded-full text-sm font-bold tracking-wider uppercase mb-2">English AR Learning Game</span>
+                <h1 class="text-4xl sm:text-6xl font-black text-amber-500 drop-shadow-md tracking-wide mb-1 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-wand-magic-sparkles text-pink-500 animate-bounce"></i>
+                    Daily Routine
+                    <i class="fa-solid fa-star text-yellow-400 animate-pulse"></i>
+                </h1>
+                <p class="text-xl sm:text-2xl text-slate-700 font-semibold mb-6">เกมแตะลากโยงคำศัพท์ภาษาอังกฤษแสนสนุก ป.3 🎒✨</p>
+            </div>
+
+            <!-- Dashboard Center: Instructions & Interactive Setup -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-3xl my-4 text-left">
+                <!-- How to Play -->
+                <div class="bg-amber-50 p-5 rounded-2xl border-2 border-amber-200">
+                    <h3 class="text-lg font-bold text-amber-800 mb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-circle-question text-xl"></i> วิธีการเล่นเกม
+                    </h3>
+                    <ul class="space-y-2 text-slate-700 text-base">
+                        <li class="flex items-start gap-2">
+                            <span class="text-amber-500 font-bold">1.</span>
+                            <span><b>ใช้ได้ 2 ระบบ:</b> ตรวจจับปลายนิ้วผ่านกล้อง หรือ ใช้เม้าส์/ลากนิ้วสัมผัสที่หน้าจอ</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-amber-500 font-bold">2.</span>
+                            <span>แตะที่ <b>คำศัพท์ภาษาอังกฤษ (ฟองตรงกลาง)</b> แล้วลากเส้นโยงไปที่ <b>คำแปลภาษาไทย (วงกลมด้านล่าง)</b> ที่ถูกต้อง</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-amber-500 font-bold">3.</span>
+                            <span>จับคู่ถูกได้ <b class="text-emerald-600">+10 คะแนน</b> หากโยงผิดจะถูก <b class="text-rose-500">-5 คะแนน</b></span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-amber-500 font-bold">4.</span>
+                            <span>ระวัง! ทุกๆ 20 วินาทีจะมี <b>"รอบโบนัส" ⭐ (+50 คะแนน)</b> ต้องจับคู่ให้ทันใน 10 วินาที!</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Camera/Input Setup Control Box -->
+                <div class="bg-pink-50 p-5 rounded-2xl border-2 border-pink-200 flex flex-col justify-between">
+                    <div>
+                        <h3 class="text-lg font-bold text-pink-800 mb-3 flex items-center gap-2">
+                            <i class="fa-solid fa-gamepad text-xl"></i> ตัวเลือกการเล่นและการควบคุม
+                        </h3>
+                        <!-- Control Mode Selector -->
+                        <div class="space-y-2 mb-4">
+                            <button id="btnPlayAR" class="w-full py-3 px-4 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-bold flex items-center justify-between transition-all duration-300 shadow-md">
+                                <span class="flex items-center gap-2">
+                                    <i class="fa-solid fa-camera"></i> เล่นด้วยกล้อง AI (Webcam AR)
+                                </span>
+                                <i class="fa-solid fa-check-circle" id="checkAR"></i>
+                            </button>
+                            <button id="btnPlayTouch" class="w-full py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold flex items-center justify-between transition-all duration-300 border border-slate-300">
+                                <span class="flex items-center gap-2">
+                                    <i class="fa-solid fa-hand-pointer"></i> เล่นด้วย เมาส์ / หน้าจอสัมผัส
+                                </span>
+                                <i class="fa-solid fa-circle" id="checkTouch" class="text-slate-300"></i>
+                            </button>
+                        </div>
+                        <p class="text-xs text-slate-500 leading-relaxed">
+                            *แนะนำเล่นในที่มีแสงสว่างเพียงพอ โดยให้กล้องเห็นมือทั้งสองข้างชัดเจน หรือสลับเป็นโหมดสัมผัสหากกล้องไม่พร้อมใช้งาน
+                        </p>
+                    </div>
+
+                    <!-- AI Status Indicator -->
+                    <div id="aiStatus" class="mt-3 flex items-center gap-2 text-sm text-amber-700 bg-amber-100 p-2 rounded-lg border border-amber-300">
+                        <i class="fa-solid fa-circle-notch animate-spin"></i>
+                        <span>กำลังโหลดระบบ AI ตรวจจับนิ้วมือ...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Start Button Group -->
+            <div class="w-full max-w-sm">
+                <button id="btnStartGame" disabled class="w-full py-4 px-8 bg-amber-400 text-amber-950 font-extrabold text-2xl sm:text-3xl rounded-2xl bubble-shadow border-4 border-amber-500 transition-all active:translate-y-1 active:shadow-none hover:bg-amber-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3">
+                    <i class="fa-solid fa-play"></i> เริ่มสนุกกันเลย!
+                </button>
+                <p id="loadingMsg" class="text-xs text-slate-500 mt-2">กรุณารอสักครู่เพื่อให้ระบบ AI โหลดโมเดลพร้อมใช้งาน</p>
+            </div>
+        </div>
+
+        <!-- 2. GAME PLAY SCREEN (Initially Hidden) -->
+        <div id="gameScreen" class="hidden flex-1 flex flex-col relative z-10">
+            <!-- HUD Panel -->
+            <div class="grid grid-cols-3 gap-3 bg-white/80 p-3 rounded-2xl border-2 border-amber-300 mb-3 shadow-sm">
+                <!-- Score & High Score -->
+                <div class="bg-emerald-100 border border-emerald-300 p-2 rounded-xl flex flex-col justify-center items-center text-emerald-800">
+                    <span class="text-xs font-bold uppercase tracking-wider">คะแนนของคุณ</span>
+                    <span id="txtScore" class="text-2xl sm:text-3xl font-black">0</span>
+                    <span class="text-[10px] opacity-80" id="txtHighScore">สถิติสูงสุด: 0</span>
+                </div>
+
+                <!-- Timer Section -->
+                <div id="timerContainer" class="bg-rose-100 border border-rose-300 p-2 rounded-xl flex flex-col justify-center items-center text-rose-800 relative overflow-hidden transition-colors duration-300">
+                    <span class="text-xs font-bold uppercase tracking-wider">เวลาที่เหลือ</span>
+                    <span id="txtTimer" class="text-2xl sm:text-3xl font-black">60</span>
+                    <!-- Time Bar background -->
+                    <div id="timerBar" class="absolute bottom-0 left-0 h-1 bg-rose-500 transition-all duration-1000 w-full"></div>
+                </div>
+
+                <!-- Match Stats -->
+                <div class="bg-sky-100 border border-sky-300 p-2 rounded-xl flex flex-col justify-center items-center text-sky-800">
+                    <span class="text-xs font-bold uppercase tracking-wider">แตะสำเร็จ</span>
+                    <span id="txtMatches" class="text-2xl sm:text-3xl font-black">0</span>
+                    <span class="text-[10px] opacity-80">ความแม่นยำ</span>
+                </div>
+            </div>
+
+            <!-- Bonus Banner Overlay -->
+            <div id="bonusBanner" class="hidden absolute top-16 left-1/2 -translate-x-1/2 bg-gradient-to-r from-yellow-400 via-amber-400 to-orange-500 text-white font-extrabold text-lg sm:text-2xl px-8 py-3 rounded-full border-4 border-white shadow-lg animate-bounce z-40 flex items-center gap-3">
+                <i class="fa-solid fa-circle-dollar-to-slot animate-spin"></i>
+                <span>⭐ BONUS ROUND (+50 คะแนน) ⭐</span>
+                <span id="bonusTimer" class="bg-rose-600 px-3 py-1 rounded-full text-sm sm:text-base">10s</span>
+            </div>
+
+            <!-- Play Area (Webcam background + Canvas overlay) -->
+            <div class="flex-1 relative bg-slate-900 rounded-2xl overflow-hidden border-4 border-slate-700 min-h-[350px] sm:min-h-[480px]">
+                <!-- Webcam Elements -->
+                <video id="webcam" class="absolute inset-0 w-full h-full object-cover pointer-events-none transform -scale-x-100" autoplay playsinline muted></video>
+                
+                <!-- Game Interactive Canvas layer -->
+                <canvas id="gameCanvas" class="absolute inset-0 w-full h-full z-20 cursor-pointer"></canvas>
+
+                <!-- Mouse/Touch Instructions Overlay -->
+                <div id="touchGuide" class="absolute top-2 right-2 bg-black/60 text-white text-xs px-3 py-1.5 rounded-lg z-30 pointer-events-none hidden flex items-center gap-2">
+                    <i class="fa-solid fa-computer-mouse animate-pulse"></i>
+                    <span>โหมดสัมผัส: คลิก/ลากนิ้วที่หน้าจอ</span>
+                </div>
+
+                <!-- Calibration/AI Hand Visual Indicators overlay -->
+                <div class="absolute bottom-2 left-2 bg-black/60 text-white text-xs px-3 py-1.5 rounded-lg z-30 pointer-events-none flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 bg-yellow-400 rounded-full inline-block animate-ping"></span>
+                    <span id="handStatusMsg">รอตรวจจับกล้อง...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. GAME OVER SCREEN (Initially Hidden) -->
+        <div id="gameOverScreen" class="hidden flex-1 flex flex-col items-center justify-center py-6 text-center z-10">
+            <div class="bg-gradient-to-b from-yellow-100 to-amber-50 p-6 sm:p-8 rounded-3xl border-4 border-amber-400 max-w-md w-full shadow-lg relative">
+                <!-- Ribbon decoration -->
+                <div class="absolute -top-6 left-1/2 -translate-x-1/2 bg-rose-500 text-white font-extrabold px-8 py-2 rounded-full border-2 border-white shadow-md text-xl">
+                    หมดเวลาแล้ว! 🎉
+                </div>
+
+                <div class="mt-4 mb-6">
+                    <span class="text-sm font-semibold text-amber-800 uppercase tracking-wide">คะแนนรวมสูงสุดวันนี้</span>
+                    <div id="txtFinalScore" class="text-6xl font-black text-amber-500 drop-shadow-md my-2">0</div>
+                    <p id="newHighScoreMsg" class="text-emerald-600 font-bold hidden animate-pulse">🎉 ยินดีด้วย! คุณทำลายสถิติสูงสุดใหม่!</p>
+                </div>
+
+                <!-- Stats Breakdowns -->
+                <div class="grid grid-cols-2 gap-3 mb-6 text-left">
+                    <div class="bg-white p-3 rounded-xl border border-amber-200">
+                        <span class="text-xs text-slate-500 block">จำนวนคู่ที่ถูกต้อง</span>
+                        <span id="txtFinalMatches" class="text-xl font-bold text-slate-800">0 ครั้ง</span>
+                    </div>
+                    <div class="bg-white p-3 rounded-xl border border-amber-200">
+                        <span class="text-xs text-slate-500 block">เวลาเฉลี่ย/ครั้ง</span>
+                        <span id="txtAvgTime" class="text-xl font-bold text-slate-800">0.0 วินาที</span>
+                    </div>
+                    <div class="bg-white p-3 rounded-xl border border-amber-200">
+                        <span class="text-xs text-slate-500 block">ความพยายามทั้งหมด</span>
+                        <span id="txtTotalAttempts" class="text-xl font-bold text-slate-800">0 ครั้ง</span>
+                    </div>
+                    <div class="bg-white p-3 rounded-xl border border-amber-200">
+                        <span class="text-xs text-slate-500 block">ความแม่นยำรวม</span>
+                        <span id="txtAccuracy" class="text-xl font-bold text-slate-800">0%</span>
+                    </div>
+                </div>
+
+                <!-- Action buttons -->
+                <div class="flex flex-col gap-2">
+                    <button id="btnRestart" class="w-full py-4 px-6 bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-xl rounded-2xl shadow-lg transition-all active:translate-y-0.5 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-rotate-left"></i> เล่นอีกครั้ง
+                    </button>
+                    <button id="btnReturnHome" class="w-full py-3 px-6 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-base rounded-2xl transition-all flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-house"></i> กลับสู่หน้าหลัก
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        /* === GAME VOCABULARY DATABASE === */
+        const vocabularyList = [
+            // Category: Family & Body
+            { id: 1, english: "Brother", thai: "พี่ชาย, น้องชาย", category: "Family & Body" },
+            { id: 2, english: "Sister", thai: "พี่สาว, น้องสาว", category: "Family & Body" },
+            { id: 3, english: "Uncle", thai: "ลุง, น้า, อาผู้ชาย", category: "Family & Body" },
+            { id: 4, english: "Aunt", thai: "ป้า, น้า, อาผู้หญิง", category: "Family & Body" },
+            { id: 5, english: "Arm", thai: "แขน", category: "Family & Body" },
+            { id: 6, english: "Fingers", thai: "นิ้วมือ", category: "Family & Body" },
+            // Category: Animals & Nature
+            { id: 7, english: "Duck", thai: "เป็ด", category: "Animals & Nature" },
+            { id: 8, english: "Bird", thai: "นก", category: "Animals & Nature" },
+            { id: 9, english: "Elephant", thai: "ช้าง", category: "Animals & Nature" },
+            { id: 10, english: "Fish", thai: "ปลา", category: "Animals & Nature" },
+            { id: 11, english: "Flower", thai: "ดอกไม้", category: "Animals & Nature" },
+            { id: 12, english: "Sun", thai: "พระอาทิตย์", category: "Animals & Nature" },
+            // Category: Objects & Things
+            { id: 13, english: "Blanket", thai: "ผ้าห่ม", category: "Objects & Things" },
+            { id: 14, english: "Pillow", thai: "หมอน", category: "Objects & Things" },
+            { id: 15, english: "Clock", thai: "นาฬิกา", category: "Objects & Things" },
+            { id: 16, english: "Bag", thai: "กระเป๋า", category: "Objects & Things" },
+            { id: 17, english: "Book", thai: "หนังสือ", category: "Objects & Things" },
+            { id: 18, english: "Drum", thai: "กลอง", category: "Objects & Things" },
+            // Category: Food & Fruits
+            { id: 19, english: "Apple", thai: "แอปเปิ้ล", category: "Food & Fruits" },
+            { id: 20, english: "Banana", thai: "กล้วย", category: "Food & Fruits" },
+            { id: 21, english: "Rice", thai: "ข้าว", category: "Food & Fruits" },
+            { id: 22, english: "Meat", thai: "เนื้อสัตว์", category: "Food & Fruits" },
+            { id: 23, english: "Lunch", thai: "อาหารกลางวัน", category: "Food & Fruits" },
+            // Category: Places & Adjectives
+            { id: 24, english: "Bedroom", thai: "ห้องนอน", category: "Places & Adjectives" },
+            { id: 25, english: "School", thai: "โรงเรียน", category: "Places & Adjectives" },
+            { id: 26, english: "Hospital", thai: "โรงพยาบาล", category: "Places & Adjectives" },
+            { id: 27, english: "Beautiful", thai: "สวย", category: "Places & Adjectives" },
+            { id: 28, english: "Big", thai: "ใหญ่", category: "Places & Adjectives" },
+            { id: 29, english: "Happy", thai: "มีความสุข", category: "Places & Adjectives" },
+            { id: 30, english: "Sad", thai: "เศร้า", category: "Places & Adjectives" }
+        ];
+
+        /* Web Audio API sound synthesizer class to avoid external audio dependency */
+        class AudioSynthesizer {
+            constructor() {
+                this.ctx = null;
+            }
+
+            init() {
+                if (!this.ctx) {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+            }
+
+            playCorrect() {
+                this.init();
+                const now = this.ctx.currentTime;
+                // Double upbeat chirp
+                this.chirp(523.25, 0.1, now); // C5
+                this.chirp(659.25, 0.15, now + 0.1); // E5
+            }
+
+            playWrong() {
+                this.init();
+                const now = this.ctx.currentTime;
+                // Low buzzer buzz-down
+                this.buzz(180, 110, 0.3, now);
+            }
+
+            playTick() {
+                this.init();
+                const now = this.ctx.currentTime;
+                // High crisp click
+                this.chirp(1200, 0.02, now);
+            }
+
+            playBonus() {
+                this.init();
+                const now = this.ctx.currentTime;
+                // Beautiful retro game level-up flourish
+                const notes = [392, 494, 587, 784]; // G4, B4, D5, G5
+                notes.forEach((freq, i) => {
+                    this.chirp(freq, 0.08, now + i * 0.08);
+                });
+            }
+
+            playGameOver() {
+                this.init();
+                const now = this.ctx.currentTime;
+                // Joyful fanfare melody
+                const fanfare = [261.63, 329.63, 392.00, 523.25, 440.00, 523.25];
+                fanfare.forEach((freq, i) => {
+                    this.chirp(freq, 0.12, now + i * 0.12);
+                });
+            }
+
+            chirp(frequency, duration, startTime) {
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(frequency, startTime);
+                
+                gain.gain.setValueAtTime(0.3, startTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+
+                osc.start(startTime);
+                osc.stop(startTime + duration);
+            }
+
+            buzz(startFreq, endFreq, duration, startTime) {
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(startFreq, startTime);
+                osc.frequency.linearRampToValueAtTime(endFreq, startTime + duration);
+
+                gain.gain.setValueAtTime(0.25, startTime);
+                gain.gain.linearRampToValueAtTime(0.01, startTime + duration);
+
+                osc.start(startTime);
+                osc.stop(startTime + duration);
+            }
+        }
+
+        const audio = new AudioSynthesizer();
+
+        // Control Modes
+        const MODE_AR = "ar";
+        const MODE_TOUCH = "touch";
+
+        const state = {
+            playMode: MODE_AR, // Default tracking mode
+            score: 0,
+            highScore: parseInt(localStorage.getItem("routine_highscore") || "0"),
+            timeLeft: 60,
+            matches: 0,
+            attempts: 0,
+            avgTime: 0.0,
+            matchStartTime: 0,
+            totalMatchTime: 0,
+
+            // Active Game Word state
+            currentWord: null,
+            options: [], // Thai translations
+            bonusActive: false,
+            bonusTimeLeft: 10,
+            bonusIntervalTimer: null,
+            usedWordIds: [], // Track words used to prioritize novel ones for Bonus
+
+            // Interactive bubbles geometry
+            englishBubble: null,
+            thaiBubbles: [], // Array of options { x, y, radius, text, isCorrect, opacity }
+            particles: [],
+
+            // Pointer Tracking State
+            pointers: {
+                left: { x: 0, y: 0, smoothedX: 0, smoothedY: 0, active: false, dragStart: false },
+                right: { x: 0, y: 0, smoothedX: 0, smoothedY: 0, active: false, dragStart: false },
+                mouse: { x: 0, y: 0, smoothedX: 0, smoothedY: 0, active: false, dragStart: false }
+            },
+
+            // Drawing connecting line state
+            connection: {
+                active: false,
+                source: null, // Pointer type doing the dragging (left, right, mouse)
+                startX: 0,
+                startY: 0,
+                currentX: 0,
+                currentY: 0
+            }
+        };
+
+        // DOM elements
+        const dom = {
+            startScreen: document.getElementById("startScreen"),
+            gameScreen: document.getElementById("gameScreen"),
+            gameOverScreen: document.getElementById("gameOverScreen"),
+            btnPlayAR: document.getElementById("btnPlayAR"),
+            btnPlayTouch: document.getElementById("btnPlayTouch"),
+            btnStartGame: document.getElementById("btnStartGame"),
+            btnRestart: document.getElementById("btnRestart"),
+            btnReturnHome: document.getElementById("btnReturnHome"),
+            checkAR: document.getElementById("checkAR"),
+            checkTouch: document.getElementById("checkTouch"),
+            aiStatus: document.getElementById("aiStatus"),
+            loadingMsg: document.getElementById("loadingMsg"),
+            webcam: document.getElementById("webcam"),
+            gameCanvas: document.getElementById("gameCanvas"),
+            txtScore: document.getElementById("txtScore"),
+            txtHighScore: document.getElementById("txtHighScore"),
+            txtTimer: document.getElementById("txtTimer"),
+            txtMatches: document.getElementById("txtMatches"),
+            timerContainer: document.getElementById("timerContainer"),
+            timerBar: document.getElementById("timerBar"),
+            handStatusMsg: document.getElementById("handStatusMsg"),
+            bonusBanner: document.getElementById("bonusBanner"),
+            bonusTimer: document.getElementById("bonusTimer"),
+            txtFinalScore: document.getElementById("txtFinalScore"),
+            txtFinalMatches: document.getElementById("txtFinalMatches"),
+            txtAvgTime: document.getElementById("txtAvgTime"),
+            txtTotalAttempts: document.getElementById("txtTotalAttempts"),
+            txtAccuracy: document.getElementById("txtAccuracy"),
+            newHighScoreMsg: document.getElementById("newHighScoreMsg"),
+            touchGuide: document.getElementById("touchGuide")
+        };
+
+        const ctx = dom.gameCanvas.getContext("2d");
+        let activeInterval = null;
+        let mainAnimationId = null;
+        let isGameRunning = false;
+
+        // Initialize highscore view
+        dom.txtHighScore.textContent = `สถิติสูงสุด: ${state.highScore}`;
+
+        let handsDetector = null;
+        let camera = null;
+        let isModelLoaded = false;
+
+        function initMediaPipe() {
+            handsDetector = new Hands({
+                locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+            });
+
+            handsDetector.setOptions({
+                maxNumHands: 2,
+                modelComplexity: 1,
+                minDetectionConfidence: 0.6,
+                minTrackingConfidence: 0.6
+            });
+
+            handsDetector.onResults(onHandResults);
+
+            // Trigger AI loading state animation and validation
+            handsDetector.initialize().then(() => {
+                isModelLoaded = true;
+                dom.aiStatus.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-500 text-lg"></i> <span class="text-emerald-700">AI ตรวจจับมือพร้อมใช้งาน!</span>`;
+                dom.aiStatus.className = "mt-3 flex items-center gap-2 text-sm text-emerald-700 bg-emerald-100 p-2 rounded-lg border border-emerald-300";
+                dom.btnStartGame.removeAttribute("disabled");
+                dom.loadingMsg.textContent = "AI โหลดสำเร็จและพร้อมเข้าตรวจจับกล้องของคุณ";
+            }).catch(err => {
+                console.error("AI Model Init Error: ", err);
+                dom.aiStatus.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-rose-500 text-lg"></i> <span class="text-rose-700">เกิดข้อผิดพลาดในการโหลด AI</span>`;
+                dom.aiStatus.className = "mt-3 flex items-center gap-2 text-sm text-rose-700 bg-rose-100 p-2 rounded-lg border border-rose-300";
+                dom.btnStartGame.removeAttribute("disabled"); // Let them start in touch fallback if AI fails
+                dom.loadingMsg.textContent = "สามารถเลือกเปลี่ยนเป็น โหมดสัมผัส เพื่อเริ่มเล่นเกมได้ทันที";
+            });
+        }
+
+        // Handle raw points from MediaPipe
+        function onHandResults(results) {
+            if (!isGameRunning || state.playMode !== MODE_AR) return;
+
+            // Clear active tracking indicators initially
+            state.pointers.left.active = false;
+            state.pointers.right.active = false;
+            dom.handStatusMsg.innerHTML = `<i class="fa-regular fa-hand text-amber-400"></i> กำลังรอผู้เล่นยกมือขนานกล้อง...`;
+
+            if (results.multiHandLandmarks && results.multiHandedness) {
+                dom.handStatusMsg.innerHTML = `<span class="w-2.5 h-2.5 bg-emerald-500 rounded-full inline-block animate-ping"></span> พร้อมตรวจจับนิ้วมือของคุณแล้ว!`;
+                
+                for (let i = 0; i < results.multiHandLandmarks.length; i++) {
+                    const landmarks = results.multiHandLandmarks[i];
+                    const handedness = results.multiHandedness[i];
+                    
+                    // Landmark index 8 is INDEX_FINGER_TIP
+                    const indexFinger = landmarks[8];
+                    const rawX = indexFinger.x;
+                    const rawY = indexFinger.y;
+
+                    // Mirror coordinates since the video is mirrored
+                    const screenX = (1 - rawX) * dom.gameCanvas.width;
+                    const screenY = rawY * dom.gameCanvas.height;
+
+                    // MediaPipe left/right classification is opposite to camera mirrored perspective
+                    // Let's identify the hand using labels: "Left" vs "Right"
+                    const side = handedness.label === "Left" ? "right" : "left"; // inverted mirroring alignment
+                    const pointer = state.pointers[side];
+                    
+                    pointer.x = screenX;
+                    pointer.y = screenY;
+                    pointer.active = true;
+                }
+            }
+        }
+
+        // Control Selection Interactions
+        dom.btnPlayAR.addEventListener("click", () => {
+            state.playMode = MODE_AR;
+            dom.btnPlayAR.className = "w-full py-3 px-4 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-bold flex items-center justify-between transition-all duration-300 shadow-md";
+            dom.checkAR.className = "fa-solid fa-check-circle";
+            dom.btnPlayTouch.className = "w-full py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold flex items-center justify-between transition-all duration-300 border border-slate-300";
+            dom.checkTouch.className = "fa-solid fa-circle text-slate-300";
+        });
+
+        dom.btnPlayTouch.addEventListener("click", () => {
+            state.playMode = MODE_TOUCH;
+            dom.btnPlayTouch.className = "w-full py-3 px-4 bg-pink-500 hover:bg-pink-600 text-white rounded-xl font-bold flex items-center justify-between transition-all duration-300 shadow-md";
+            dom.checkTouch.className = "fa-solid fa-check-circle";
+            dom.btnPlayAR.className = "w-full py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold flex items-center justify-between transition-all duration-300 border border-slate-300";
+            dom.checkAR.className = "fa-solid fa-circle text-slate-300";
+        });
+
+        // Trigger Startup
+        dom.btnStartGame.addEventListener("click", () => {
+            audio.init();
+            startGame();
+        });
+
+        async function startWebcam() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { width: 640, height: 480, facingMode: "user" },
+                    audio: false
+                });
+                dom.webcam.srcObject = stream;
+                return new Promise((resolve) => {
+                    dom.webcam.onloadedmetadata = () => {
+                        dom.webcam.play();
+                        resolve(true);
+                    };
+                });
+            } catch (err) {
+                console.warn("Unable to open camera, auto-shifting to touch mode:", err);
+                state.playMode = MODE_TOUCH;
+                return false;
+            }
+        }
+
+        function stopWebcam() {
+            if (camera) {
+                camera.stop();
+                camera = null;
+            }
+            if (dom.webcam.srcObject) {
+                const tracks = dom.webcam.srcObject.getTracks();
+                tracks.forEach(track => track.stop());
+                dom.webcam.srcObject = null;
+            }
+        }
+
+        // Generate dynamic placement for interactive bubble items
+        function resizeCanvas() {
+            const rect = dom.gameCanvas.parentElement.getBoundingClientRect();
+            dom.gameCanvas.width = rect.width;
+            dom.gameCanvas.height = rect.height;
+            repositionBubbles();
+        }
+
+        function repositionBubbles() {
+            const w = dom.gameCanvas.width;
+            const h = dom.gameCanvas.height;
+
+            if (state.englishBubble) {
+                state.englishBubble.x = w / 2;
+                state.englishBubble.y = h * 0.35;
+                state.englishBubble.radius = Math.min(w, h) * 0.12;
+            }
+
+            if (state.thaiBubbles && state.thaiBubbles.length > 0) {
+                const bubbleRadius = Math.min(w, h) * 0.09;
+                const columnSpacing = w / (state.thaiBubbles.length + 1);
+                state.thaiBubbles.forEach((bubble, idx) => {
+                    bubble.x = columnSpacing * (idx + 1);
+                    bubble.y = h * 0.8;
+                    bubble.radius = bubbleRadius;
+                });
+            }
+        }
+
+        // Draw new English word + 3 Thai Translation choices
+        function spawnNextQuestion() {
+            state.matchStartTime = Date.now();
+
+            let availablePool = vocabularyList;
+            
+            // For bonus rounds, pick completely unencountered word if possible
+            if (state.bonusActive) {
+                const unused = vocabularyList.filter(item => !state.usedWordIds.includes(item.id));
+                if (unused.length > 0) {
+                    availablePool = unused;
+                }
+            }
+
+            // Pick randomly
+            const randomIndex = Math.floor(Math.random() * availablePool.length);
+            const questionWord = availablePool[randomIndex];
+            state.currentWord = questionWord;
+            state.usedWordIds.push(questionWord.id);
+
+            // Prepare choices: 1 correct + 2 distractors
+            const distractors = vocabularyList.filter(item => item.id !== questionWord.id);
+            // Shuffle and pick 2
+            distractors.sort(() => Math.random() - 0.5);
+            const chosenDistractors = distractors.slice(0, 2);
+
+            const allChoices = [
+                { text: questionWord.thai, isCorrect: true },
+                { text: chosenDistractors[0].thai, isCorrect: false },
+                { text: chosenDistractors[1].thai, isCorrect: false }
+            ];
+
+            // Shuffle choice layouts
+            allChoices.sort(() => Math.random() - 0.5);
+
+            // Populate static bubble data (will be positioned correctly on resize/reposition)
+            state.englishBubble = {
+                text: questionWord.english,
+                category: questionWord.category,
+                x: 0,
+                y: 0,
+                radius: 0
+            };
+
+            state.thaiBubbles = allChoices.map(choice => ({
+                text: choice.text,
+                isCorrect: choice.isCorrect,
+                x: 0,
+                y: 0,
+                radius: 0,
+                scale: 1.0,
+                hovered: false
+            }));
+
+            repositionBubbles();
+        }
+
+        // Trigger gameplay sequence
+        async function startGame() {
+            // Setup layouts
+            dom.startScreen.classList.add("hidden");
+            dom.gameScreen.classList.remove("hidden");
+            dom.gameOverScreen.classList.add("hidden");
+
+            // Reset scores & statistics
+            state.score = 0;
+            state.timeLeft = 60;
+            state.matches = 0;
+            state.attempts = 0;
+            state.totalMatchTime = 0;
+            state.usedWordIds = [];
+            state.bonusActive = false;
+            dom.txtScore.textContent = "0";
+            dom.txtMatches.textContent = "0";
+            dom.txtTimer.textContent = "60";
+            dom.timerBar.style.width = "100%";
+            dom.timerContainer.className = "bg-rose-100 border border-rose-300 p-2 rounded-xl flex flex-col justify-center items-center text-rose-800 relative overflow-hidden transition-colors duration-300";
+
+            isGameRunning = true;
+
+            // Dynamic layout resizing
+            resizeCanvas();
+            window.addEventListener("resize", resizeCanvas);
+
+            // Initialise Question
+            spawnNextQuestion();
+
+            // Set up control modes
+            if (state.playMode === MODE_AR) {
+                dom.touchGuide.classList.add("hidden");
+                // Open device camera and pipe output
+                const hasCamera = await startWebcam();
+                if (hasCamera) {
+                    camera = new Camera(dom.webcam, {
+                        onFrame: async () => {
+                            if (isGameRunning && state.playMode === MODE_AR) {
+                                await handsDetector.send({ image: dom.webcam });
+                            }
+                        },
+                        width: 640,
+                        height: 480
+                    });
+                    camera.start();
+                } else {
+                    // Fallback to manual touch input
+                    state.playMode = MODE_TOUCH;
+                    dom.touchGuide.classList.remove("hidden");
+                }
+            } else {
+                stopWebcam();
+                dom.touchGuide.classList.remove("hidden");
+            }
+
+            // Fire main rendering frame loop
+            mainAnimationId = requestAnimationFrame(gameLoop);
+
+            // Main timer countdown interval
+            activeInterval = setInterval(() => {
+                if (!isGameRunning) return;
+
+                state.timeLeft--;
+                dom.txtTimer.textContent = state.timeLeft;
+                dom.timerBar.style.width = `${(state.timeLeft / 60) * 100}%`;
+
+                // Panic indicator below 10 seconds
+                if (state.timeLeft <= 10) {
+                    audio.playTick();
+                    dom.timerContainer.className = "bg-rose-500 border border-rose-600 p-2 rounded-xl flex flex-col justify-center items-center text-white relative overflow-hidden animate-pulse";
+                }
+
+                // Trigger Bonus Rounds every 20s (at timeleft 40s and 20s)
+                if (state.timeLeft === 40 || state.timeLeft === 20) {
+                    startBonusRound();
+                }
+
+                if (state.timeLeft <= 0) {
+                    endGame();
+                }
+            }, 1000);
+        }
+
+        function startBonusRound() {
+            state.bonusActive = true;
+            state.bonusTimeLeft = 10;
+            audio.playBonus();
+
+            // Show UI banner
+            dom.bonusBanner.classList.remove("hidden");
+            dom.bonusTimer.textContent = "10s";
+
+            // Setup dedicated bonus countdown
+            spawnNextQuestion();
+
+            state.bonusIntervalTimer = setInterval(() => {
+                state.bonusTimeLeft--;
+                dom.bonusTimer.textContent = `${state.bonusTimeLeft}s`;
+
+                if (state.bonusTimeLeft <= 0) {
+                    stopBonusRound();
+                }
+            }, 1000);
+        }
+
+        function stopBonusRound() {
+            state.bonusActive = false;
+            clearInterval(state.bonusIntervalTimer);
+            dom.bonusBanner.classList.add("hidden");
+            // Back to standard question
+            if (isGameRunning) {
+                spawnNextQuestion();
+            }
+        }
+
+        // Mouse coordinate trackers
+        function getCanvasCoords(e) {
+            const rect = dom.gameCanvas.getBoundingClientRect();
+            let clientX, clientY;
+            if (e.touches && e.touches.length > 0) {
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
+            } else {
+                clientX = e.clientX;
+                clientY = e.clientY;
+            }
+            return {
+                x: clientX - rect.left,
+                y: clientY - rect.top
+            };
+        }
+
+        function handlePointerStart(e) {
+            if (!isGameRunning) return;
+            const coords = getCanvasCoords(e);
+            
+            // Set mouse/touch coordinates
+            state.pointers.mouse.x = coords.x;
+            state.pointers.mouse.y = coords.y;
+            state.pointers.mouse.active = true;
+
+            // Check touch distance to starting bubble
+            const dx = coords.x - state.englishBubble.x;
+            const dy = coords.y - state.englishBubble.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+
+            if (dist <= state.englishBubble.radius + 10) {
+                state.connection.active = true;
+                state.connection.source = "mouse";
+                state.connection.startX = state.englishBubble.x;
+                state.connection.startY = state.englishBubble.y;
+                state.connection.currentX = coords.x;
+                state.connection.currentY = coords.y;
+            }
+        }
+
+        function handlePointerMove(e) {
+            if (!isGameRunning) return;
+            const coords = getCanvasCoords(e);
+            state.pointers.mouse.x = coords.x;
+            state.pointers.mouse.y = coords.y;
+
+            if (state.connection.active && state.connection.source === "mouse") {
+                state.connection.currentX = coords.x;
+                state.connection.currentY = coords.y;
+            }
+        }
+
+        function handlePointerEnd() {
+            if (!isGameRunning) return;
+            evaluateMouseConnection();
+            state.pointers.mouse.active = false;
+        }
+
+        // Attach fallbacks to canvas
+        dom.gameCanvas.addEventListener("mousedown", handlePointerStart);
+        dom.gameCanvas.addEventListener("mousemove", handlePointerMove);
+        window.addEventListener("mouseup", handlePointerEnd);
+
+        dom.gameCanvas.addEventListener("touchstart", (e) => {
+            e.preventDefault();
+            handlePointerStart(e);
+        }, { passive: false });
+        dom.gameCanvas.addEventListener("touchmove", (e) => {
+            e.preventDefault();
+            handlePointerMove(e);
+        }, { passive: false });
+        window.addEventListener("touchend", handlePointerEnd);
+
+        // Verify manual mouse connection line drop
+        function evaluateMouseConnection() {
+            if (!state.connection.active || state.connection.source !== "mouse") return;
+            state.connection.active = false;
+
+            const dropX = state.connection.currentX;
+            const dropY = state.connection.currentY;
+
+            let hitOption = null;
+            state.thaiBubbles.forEach(bubble => {
+                const dx = dropX - bubble.x;
+                const dy = dropY - bubble.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist <= bubble.radius + 15) {
+                    hitOption = bubble;
+                }
+            });
+
+            if (hitOption) {
+                checkPair(hitOption);
+            }
+        }
+
+        // Logic check for both AI pointers & Touch matching
+        function checkPair(selectedThaiBubble) {
+            state.attempts++;
+            const matchDuration = (Date.now() - state.matchStartTime) / 1000;
+            state.totalMatchTime += matchDuration;
+
+            if (selectedThaiBubble.isCorrect) {
+                // Correct match sequence
+                audio.playCorrect();
+                createExplosion(selectedThaiBubble.x, selectedThaiBubble.y, "#10b981");
+
+                // Points assignment
+                const pointsGained = state.bonusActive ? 50 : 10;
+                state.score += pointsGained;
+                state.matches++;
+
+                // Visual score feedback animation on dashboard
+                dom.txtScore.textContent = state.score;
+                dom.txtMatches.textContent = state.matches;
+
+                // Animate correct pulse
+                selectedThaiBubble.scale = 1.3;
+                setTimeout(() => {
+                    selectedThaiBubble.scale = 1.0;
+                }, 200);
+
+                if (state.bonusActive) {
+                    stopBonusRound();
+                } else {
+                    spawnNextQuestion();
+                }
+            } else {
+                // Wrong Match penalty
+                audio.playWrong();
+                createExplosion(selectedThaiBubble.x, selectedThaiBubble.y, "#f43f5e");
+
+                state.score = Math.max(0, state.score - 5);
+                dom.txtScore.textContent = state.score;
+
+                // Shake effect animation
+                selectedThaiBubble.scale = 0.8;
+                setTimeout(() => {
+                    selectedThaiBubble.scale = 1.0;
+                }, 200);
+            }
+        }
+
+        // Beautiful aesthetic dynamic particle engine
+        function createExplosion(x, y, color) {
+            for (let i = 0; i < 24; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = 2 + Math.random() * 8;
+                state.particles.push({
+                    x: x,
+                    y: y,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    radius: 3 + Math.random() * 6,
+                    color: color,
+                    alpha: 1.0,
+                    decay: 0.02 + Math.random() * 0.03
+                });
+            }
+        }
+
+        function updateParticles() {
+            for (let i = state.particles.length - 1; i >= 0; i--) {
+                const p = state.particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vy += 0.1; // gravity acceleration
+                p.alpha -= p.decay;
+
+                if (p.alpha <= 0) {
+                    state.particles.splice(i, 1);
+                }
+            }
+        }
+
+        function gameLoop() {
+            if (!isGameRunning) return;
+
+            // 1. Clear Screen Canvas
+            ctx.clearRect(0, 0, dom.gameCanvas.width, dom.gameCanvas.height);
+
+            // 2. Linear Smoothing Filter for pointers (Lerp to remove AI hand jitter)
+            const k = 0.25; // Interpolation speed
+            ["left", "right", "mouse"].forEach(pKey => {
+                const p = state.pointers[pKey];
+                if (p.active) {
+                    p.smoothedX += (p.x - p.smoothedX) * k;
+                    p.smoothedY += (p.y - p.smoothedY) * k;
+                }
+            });
+
+            // 3. AI drag detection logic
+            if (state.playMode === MODE_AR) {
+                ["left", "right"].forEach(pKey => {
+                    const p = state.pointers[pKey];
+                    if (p.active) {
+                        // Check if hand finger tip overlaps start bubble
+                        const dx = p.smoothedX - state.englishBubble.x;
+                        const dy = p.smoothedY - state.englishBubble.y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+
+                        if (dist <= state.englishBubble.radius + 15) {
+                            p.dragStart = true;
+                        }
+
+                        // Drawing connection line active
+                        if (p.dragStart) {
+                            // Render glowing connecting line from English card
+                            ctx.beginPath();
+                            ctx.moveTo(state.englishBubble.x, state.englishBubble.y);
+                            ctx.lineTo(p.smoothedX, p.smoothedY);
+                            ctx.strokeStyle = "rgba(251, 191, 36, 0.7)";
+                            ctx.lineWidth = 10;
+                            ctx.lineCap = "round";
+                            ctx.setLineDash([12, 12]);
+                            ctx.stroke();
+                            ctx.setLineDash([]); // clear line dash
+
+                            // Check collision with Thai bubble options
+                            state.thaiBubbles.forEach(bubble => {
+                                const bdx = p.smoothedX - bubble.x;
+                                const bdy = p.smoothedY - bubble.y;
+                                const bdist = Math.sqrt(bdx * bdx + bdy * bdy);
+
+                                if (bdist <= bubble.radius + 15) {
+                                    if (!bubble.hovered) {
+                                        bubble.hovered = true;
+                                        checkPair(bubble);
+                                        p.dragStart = false; // break drag on matching action
+                                    }
+                                } else {
+                                    bubble.hovered = false;
+                                }
+                            });
+                        }
+                    } else {
+                        p.dragStart = false;
+                    }
+                });
+            }
+
+            // 4. Render manual mouse drag connection line (Touch / Mouse mode)
+            if (state.playMode === MODE_TOUCH && state.connection.active) {
+                ctx.beginPath();
+                ctx.moveTo(state.connection.startX, state.connection.startY);
+                ctx.lineTo(state.connection.currentX, state.connection.currentY);
+                ctx.strokeStyle = "rgba(236, 72, 153, 0.75)";
+                ctx.lineWidth = 12;
+                ctx.lineCap = "round";
+                ctx.setLineDash([10, 8]);
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+
+            // 5. Draw English Word Bubble (Floating Animation)
+            const pulse = Math.sin(Date.now() / 250) * 5;
+            const eBubble = state.englishBubble;
+            if (eBubble) {
+                ctx.save();
+                ctx.shadowColor = "rgba(0, 0, 0, 0.2)";
+                ctx.shadowBlur = 15;
+                ctx.shadowOffsetY = 8;
+
+                // Card background colors (Bonus vs Normal)
+                const baseGrad = ctx.createRadialGradient(eBubble.x, eBubble.y - 10, 5, eBubble.x, eBubble.y, eBubble.radius);
+                if (state.bonusActive) {
+                    baseGrad.addColorStop(0, "#fef08a"); // Yellow Gold
+                    baseGrad.addColorStop(1, "#f59e0b");
+                } else {
+                    baseGrad.addColorStop(0, "#93c5fd"); // Sky Blue Pastel
+                    baseGrad.addColorStop(1, "#3b82f6");
+                }
+
+                ctx.beginPath();
+                ctx.arc(eBubble.x, eBubble.y, eBubble.radius + pulse, 0, Math.PI * 2);
+                ctx.fillStyle = baseGrad;
+                ctx.strokeStyle = "#ffffff";
+                ctx.lineWidth = 6;
+                ctx.fill();
+                ctx.stroke();
+                ctx.restore();
+
+                // Word category text overlay
+                ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+                ctx.font = "bold 14px 'Inter', sans-serif";
+                ctx.textAlign = "center";
+                ctx.fillText(eBubble.category.toUpperCase(), eBubble.x, eBubble.y - (eBubble.radius * 0.4));
+
+                // Primary word
+                ctx.fillStyle = "#ffffff";
+                ctx.font = `black ${Math.max(20, eBubble.radius * 0.35)}px 'Itim', 'Inter', sans-serif`;
+                ctx.fillText(eBubble.text, eBubble.x, eBubble.y + (eBubble.radius * 0.1));
+
+                // Interactive Grab instructions inside English word bubble
+                ctx.fillStyle = "rgba(255, 255, 255, 0.85)";
+                ctx.font = "14px 'Itim', sans-serif";
+                ctx.fillText("แตะแล้วลาก!", eBubble.x, eBubble.y + (eBubble.radius * 0.5));
+            }
+
+            // 6. Draw 3 Thai Option Choice Bubbles
+            state.thaiBubbles.forEach(bubble => {
+                ctx.save();
+                ctx.shadowColor = "rgba(0, 0, 0, 0.15)";
+                ctx.shadowBlur = 10;
+                ctx.shadowOffsetY = 6;
+
+                const displayRadius = bubble.radius * bubble.scale;
+                const thGrad = ctx.createRadialGradient(bubble.x, bubble.y - 5, 2, bubble.x, bubble.y, displayRadius);
+                thGrad.addColorStop(0, "#fdf2f8");
+                thGrad.addColorStop(1, "#fbcfe8");
+
+                ctx.beginPath();
+                ctx.arc(bubble.x, bubble.y, displayRadius, 0, Math.PI * 2);
+                ctx.fillStyle = thGrad;
+                ctx.strokeStyle = "#ec4899"; // Pink border
+                ctx.lineWidth = 4;
+                ctx.fill();
+                ctx.stroke();
+                ctx.restore();
+
+                // Dynamic Font scale matching bubble size
+                ctx.fillStyle = "#1e293b";
+                ctx.font = `bold ${Math.max(14, displayRadius * 0.28)}px 'Itim', sans-serif`;
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                
+                // Wrap long text nicely if contains spaces
+                if (bubble.text.length > 8 && bubble.text.includes(", ")) {
+                    const parts = bubble.text.split(", ");
+                    ctx.fillText(parts[0], bubble.x, bubble.y - 10);
+                    ctx.fillText(parts[1], bubble.x, bubble.y + 12);
+                } else {
+                    ctx.fillText(bubble.text, bubble.x, bubble.y);
+                }
+            });
+
+            // 7. Update & Draw Particles Explosions
+            updateParticles();
+            state.particles.forEach(p => {
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                ctx.fillStyle = p.color;
+                ctx.globalAlpha = p.alpha;
+                ctx.fill();
+            });
+            ctx.globalAlpha = 1.0; // Reset canvas alpha
+
+            // 8. Render Glowing Hand-tracking pointers (Yellow glow targets)
+            ["left", "right"].forEach(pKey => {
+                const p = state.pointers[pKey];
+                if (p.active && state.playMode === MODE_AR) {
+                    ctx.save();
+                    // Draw outer glowing halo rings
+                    ctx.shadowColor = "#f59e0b";
+                    ctx.shadowBlur = 20;
+                    ctx.beginPath();
+                    ctx.arc(p.smoothedX, p.smoothedY, 16, 0, Math.PI * 2);
+                    ctx.fillStyle = "rgba(251, 191, 36, 0.4)";
+                    ctx.strokeStyle = "#f59e0b";
+                    ctx.lineWidth = 3;
+                    ctx.fill();
+                    ctx.stroke();
+
+                    // Inner bright pointer core dot
+                    ctx.beginPath();
+                    ctx.arc(p.smoothedX, p.smoothedY, 6, 0, Math.PI * 2);
+                    ctx.fillStyle = "#ffffff";
+                    ctx.fill();
+                    ctx.restore();
+
+                    // Floating text tag over pointer
+                    ctx.fillStyle = "#ffffff";
+                    ctx.font = "bold 12px 'Inter', sans-serif";
+                    ctx.shadowColor = "black";
+                    ctx.shadowBlur = 4;
+                    ctx.fillText(pKey === "left" ? "L-Hand" : "R-Hand", p.smoothedX, p.smoothedY - 24);
+                    ctx.shadowBlur = 0;
+                }
+            });
+
+            // Handle touch fallback marker
+            if (state.pointers.mouse.active && state.playMode === MODE_TOUCH) {
+                ctx.beginPath();
+                ctx.arc(state.pointers.mouse.x, state.pointers.mouse.y, 8, 0, Math.PI * 2);
+                ctx.fillStyle = "rgba(236, 72, 153, 0.6)";
+                ctx.fill();
+            }
+
+            mainAnimationId = requestAnimationFrame(gameLoop);
+        }
+
+        function endGame() {
+            isGameRunning = false;
+            cancelAnimationFrame(mainAnimationId);
+            clearInterval(activeInterval);
+            if (state.bonusIntervalTimer) clearInterval(state.bonusIntervalTimer);
+            
+            stopWebcam();
+            audio.playGameOver();
+
+            // Perform post-game calculations
+            const avgTimePerMatch = state.matches > 0 ? (state.totalMatchTime / state.matches).toFixed(1) : "0.0";
+            const totalAttempts = state.attempts;
+            const accuracy = totalAttempts > 0 ? Math.round((state.matches / totalAttempts) * 100) : 0;
+
+            // Render stats card
+            dom.txtFinalScore.textContent = state.score;
+            dom.txtFinalMatches.textContent = `${state.matches} ครั้ง`;
+            dom.txtAvgTime.textContent = `${avgTimePerMatch} วินาที`;
+            dom.txtTotalAttempts.textContent = `${totalAttempts} ครั้ง`;
+            dom.txtAccuracy.textContent = `${accuracy}%`;
+
+            // Check highscore
+            if (state.score > state.highScore) {
+                state.highScore = state.score;
+                localStorage.setItem("routine_highscore", state.highScore.toString());
+                dom.newHighScoreMsg.classList.remove("hidden");
+                dom.txtHighScore.textContent = `สถิติสูงสุด: ${state.highScore}`;
+            } else {
+                dom.newHighScoreMsg.classList.add("hidden");
+            }
+
+            // Display UI Panels swap
+            dom.gameScreen.classList.add("hidden");
+            dom.gameOverScreen.classList.remove("hidden");
+        }
+
+        // Restart Interactions
+        dom.btnRestart.addEventListener("click", () => {
+            startGame();
+        });
+
+        dom.btnReturnHome.addEventListener("click", () => {
+            dom.gameOverScreen.classList.add("hidden");
+            dom.startScreen.classList.remove("hidden");
+        });
+
+        // Initialize App & Trigger AI detection libraries setup on initial body load
+        window.onload = function() {
+            initMediaPipe();
+        };
+    </script>
+</body>
+</html>
